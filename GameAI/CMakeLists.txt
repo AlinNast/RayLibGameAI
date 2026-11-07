@@ -1,7 +1,7 @@
 ﻿# CMakeList.txt : CMake project for GameAI, include source and define
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required (VERSION 3.14)
 
 # Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
@@ -11,11 +11,14 @@ endif()
 
 project ("GameAI")
 
-# Add source to this project's executable.
+include(FetchContent)
+FetchContent_Declare(
+    raylib
+    URL https://github.com/raysan5/raylib/archive/refs/tags/5.5.zip
+)
+FetchContent_MakeAvailable(raylib)
+
 add_executable (GameAI "GameAI.cpp" "GameAI.h")
+target_link_libraries(GameAI raylib)
 
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET GameAI PROPERTY CXX_STANDARD 20)
-endif()
-
-# TODO: Add tests and install targets if needed.
+set_property(TARGET GameAI PROPERTY CXX_STANDARD 20)
