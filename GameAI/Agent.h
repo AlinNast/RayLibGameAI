@@ -19,6 +19,9 @@ public:
     Kinematic kinematic;
     float maxSpeed = 200.0f;
     float maxAcceleration = 400.0f;
+	bool orientRotationToMovement = true; // if true, agent will rotate to face the direction of movement
+    float minFacingSpeed = 1.0f; // minimum speen necesarry for turning
+	float maxRotationSpeed = 10.0f; // maximum rotation speed in rad/s
 
     Agent() = default;
     explicit Agent(Vector2 startPosition);
@@ -26,4 +29,5 @@ public:
     void    Update(const SteeringOutput& steering, float dt);
     void    Draw() const;
     Vector2 Forward() const;   // unit vector the agent is facing
+	void	OrientRotationToMovement(float delta); // update orientation to face the direction of movement
 };

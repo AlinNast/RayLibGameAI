@@ -12,19 +12,33 @@ Vector2 Agent::Forward() const
     return { cosf(kinematic.orientation), sinf(kinematic.orientation) };
 }
 
+static float WrapAngle(float a)   // bring any angle into [-PI, PI]
+{
+    while (a > PI) a -= 2.0f * PI;
+    while (a < -PI) a += 2.0f * PI;
+    return a;
+}
+
 void Agent::Update(const SteeringOutput& steering, float delta)
 {
     // Move using the current velocity
     kinematic.position = Vector2Add(kinematic.position, Vector2Scale(kinematic.velocity, delta));
-    kinematic.orientation += kinematic.rotation * delta;
 
     // Apply the steering as acceleration
-    kinematic.velocity = Vector2Add(kinematic.velocity, Vector2Scale(steering.linear, delta));
-    kinematic.rotation += steering.angular * delta;
+    kinematic.velocity = Vector2Add(kinematic.velocity, Vector2Scale(steering.linearAcceleration, delta));
 
     // Clamp speed
     if (Vector2Length(kinematic.velocity) > maxSpeed)
         kinematic.velocity = Vector2Scale(Vector2Normalize(kinematic.velocity), maxSpeed);
+
+	// Update orientation based on rotation
+    if (orientRotationToMovement) {
+        OrientRotationToMovement(delta);
+    }
+    else {
+        kinematic.orientation += kinematic.rotation * delta;
+		kinematic.rotation += steering.angularAcceleration * delta;
+	}
 
     // Wrap around the screen so it doesn't disappear while testing
     float w = (float)GetScreenWidth();
@@ -47,4 +61,20 @@ void Agent::Draw() const
     Vector2 right = { p.x + cosf(o + back) * size, p.y + sinf(o + back) * size };
 
     DrawTriangle(tip, left, right, MAROON);
+}
+
+void Agent::OrientRotationToMovement(float delta) {
+    kinematic.rotation = 0.0f;   // not used in this mode
+
+    if (Vector2Length(kinematic.velocity) > minFacingSpeed) {
+        float desired = atan2f(kinematic.velocity.y, kinematic.velocity.x);
+        float diff = WrapAngle(desired - kinematic.orientation);
+
+        float maxStep = maxRotationSpeed * delta;
+        if (diff > maxStep) diff = maxStep;
+        if (diff < -maxStep) diff = -maxStep;
+
+        kinematic.orientation += diff;
+    }
+
 }

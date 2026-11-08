@@ -50,4 +50,37 @@ namespace Steering {
         return out;
     }
 
+    SteeringOutput Arrive(const Agent& agent, Vector2 target,
+        float targetRadius, float slowRadius,
+        float timeToTarget)
+    {
+        SteeringOutput out;
+
+        Vector2 toTarget = Vector2Subtract(target, agent.kinematic.position);
+        float distance = Vector2Length(toTarget);
+
+        // Desired speed depends on distance
+        float desiredSpeed;
+        if (distance < targetRadius)      desiredSpeed = 0.0f;
+        else if (distance > slowRadius)   desiredSpeed = agent.maxSpeed;
+        else                              desiredSpeed = agent.maxSpeed * distance / slowRadius;
+
+        // Desired velocity: toward the target at that speed
+        Vector2 desiredVelocity = { 0.0f, 0.0f };
+        if (distance > 0.0001f)
+            desiredVelocity = Vector2Scale(Vector2Normalize(toTarget), desiredSpeed);
+
+        // Acceleration needed to reach it in timeToTarget seconds
+        Vector2 accel = Vector2Scale(
+            Vector2Subtract(desiredVelocity, agent.kinematic.velocity),
+            1.0f / timeToTarget);
+
+        // Clamp
+        if (Vector2Length(accel) > agent.maxAcceleration)
+            accel = Vector2Scale(Vector2Normalize(accel), agent.maxAcceleration);
+
+        out.linearAcceleration = accel;
+        return out;
+    }
+
 } // namespace Steering

@@ -4,7 +4,9 @@
 #include "Steering.h"
 #include <string>
 
-enum class Mode { Seek, Flee, Stop };
+enum class Mode { Seek, Flee,Arrive, Stop };
+const float slowRadius = 200.0f;
+const float targetRadius = 10.0f;
 
 
 int main()
@@ -21,17 +23,20 @@ int main()
         // --- Input ---
         if (IsKeyPressed(KEY_ONE)) mode = Mode::Seek;
 		if (IsKeyPressed(KEY_TWO)) mode = Mode::Flee;
+		if (IsKeyPressed(KEY_THREE)) mode = Mode::Arrive;
         if (IsKeyPressed(KEY_ZERO)) mode = Mode::Stop;
 
         Vector2 mouse = GetMousePosition();
 
 
-        // --- Controller: compute steering ---
+        // --- Controller ---
         const char* label = "";
-        SteeringOutput steering;
+
+		SteeringOutput steering; // will hold the steering output for the current mode
         switch (mode) {
         case Mode::Seek:    steering = Steering::Seek(agent, mouse); label = "1 - Seek";    break;
 		case Mode::Flee:    steering = Steering::Flee(agent, mouse); label = "2 - Flee";    break;
+		case Mode::Arrive:  steering = Steering::Arrive(agent, mouse, targetRadius, slowRadius); label = "3 - Arrive";  break;
         case Mode::Stop:    steering = Steering::Brake(agent);       label = "0 - Brake";   break;
         }
 
@@ -52,6 +57,10 @@ int main()
 		//// --- Debug ---
         DrawCircleV(mouse, 8.0f, Fade(SKYBLUE, 0.7f));
         DrawCircleLinesV(mouse, 8.0f, RAYWHITE);
+        if (mode == Mode::Arrive) {
+            DrawCircleLinesV(mouse, slowRadius, Fade(YELLOW, 0.6f));
+            DrawCircleLinesV(mouse, targetRadius, Fade(RED, 0.8f));
+        }
 
         EndDrawing();
     }
