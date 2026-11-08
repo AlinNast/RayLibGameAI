@@ -50,30 +50,27 @@ namespace Steering {
         return out;
     }
 
-    SteeringOutput Arrive(const Agent& agent, Vector2 target,
-        float targetRadius, float slowRadius,
-        float timeToTarget)
+    SteeringOutput Arrive(const Agent& agent, Vector2 target, float targetRadius, float slowRadius, float timeToTarget)
     {
         SteeringOutput out;
 
+		// Get the direction and distance to the target
         Vector2 toTarget = Vector2Subtract(target, agent.kinematic.position);
         float distance = Vector2Length(toTarget);
 
         // Desired speed depends on distance
         float desiredSpeed;
-        if (distance < targetRadius)      desiredSpeed = 0.0f;
-        else if (distance > slowRadius)   desiredSpeed = agent.maxSpeed;
-        else                              desiredSpeed = agent.maxSpeed * distance / slowRadius;
+		if (distance < targetRadius)      desiredSpeed = 0.0f; // if its inside the target radius, stop
+		else if (distance > slowRadius)   desiredSpeed = agent.maxSpeed; // if its outside the slow radius, go max speed
+		else                              desiredSpeed = agent.maxSpeed * distance / slowRadius; // otherwise go at a speed proportionate to the distance
 
-        // Desired velocity: toward the target at that speed
+		// Desired velocity scales with the desired speed and points in the direction of the target
         Vector2 desiredVelocity = { 0.0f, 0.0f };
         if (distance > 0.0001f)
             desiredVelocity = Vector2Scale(Vector2Normalize(toTarget), desiredSpeed);
 
         // Acceleration needed to reach it in timeToTarget seconds
-        Vector2 accel = Vector2Scale(
-            Vector2Subtract(desiredVelocity, agent.kinematic.velocity),
-            1.0f / timeToTarget);
+        Vector2 accel = Vector2Scale(Vector2Subtract(desiredVelocity, agent.kinematic.velocity),1.0f / timeToTarget);
 
         // Clamp
         if (Vector2Length(accel) > agent.maxAcceleration)
@@ -81,6 +78,28 @@ namespace Steering {
 
         out.linearAcceleration = accel;
         return out;
+    }
+
+    SteeringOutput Pursue(const Agent& agent, Vector2 targetPos, Vector2 targetVel, float maxPrediction)
+    {
+        Vector2 toTarget = Vector2Subtract(targetPos, agent.kinematic.position);
+        float distance = Vector2Length(toTarget);
+
+        // How fast the agent is currently moving
+        float speed = Vector2Length(agent.kinematic.velocity);
+
+        // Time to reach the target if it stood still, capped
+        float prediction;
+        if (speed <= distance / maxPrediction)
+            prediction = maxPrediction;
+        else
+            prediction = distance / speed;
+
+        // Where the target will be after that time
+        Vector2 future = Vector2Add(targetPos, Vector2Scale(targetVel, prediction));
+
+        // Seek the predicted point
+        return Seek(agent, future);
     }
 
 } // namespace Steering

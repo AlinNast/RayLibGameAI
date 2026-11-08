@@ -10,4 +10,6 @@ namespace Steering {
     SteeringOutput Arrive(const Agent& agent, Vector2 target,
         float targetRadius, float slowRadius,
         float timeToTarget = 0.1f);
+    SteeringOutput Pursue(const Agent& agent, Vector2 targetPos, Vector2 targetVel,
+        float maxPrediction = 1.0f);
 }
