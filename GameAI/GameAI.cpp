@@ -1,52 +1,57 @@
-﻿// GameAI.cpp : Defines the entry point for the application.
-//
-#include "raylib.h"
-#include <cmath>
+﻿#include "raylib.h"
+#include "raymath.h"
+#include "Agent.h"
+#include "Steering.h"
 #include <string>
-#include "GameAI.h"
+
+enum class Mode { Seek, Flee, Stop };
+
 
 int main()
 {
     InitWindow(1200, 900, "Steering Behaviors");
     SetTargetFPS(60);
 
-    Vector2 pos = { 400.0f, 300.0f };
-    float heading = 0.0f;  // radians, 0 = pointing right
-
-    std::string label = "Press 1 or 2";
+    Agent agent({ 400.0f, 300.0f });
+    Mode mode = Mode::Stop;
 
     while (!WindowShouldClose()) {
+		float delta = GetFrameTime(); // seconds since last frame
 
         // --- Input ---
-        if (IsKeyPressed(KEY_ONE))  label = "1";
-        if (IsKeyPressed(KEY_TWO))  label = "2";
+        if (IsKeyPressed(KEY_ONE)) mode = Mode::Seek;
+		if (IsKeyPressed(KEY_TWO)) mode = Mode::Flee;
+        if (IsKeyPressed(KEY_ZERO)) mode = Mode::Stop;
 
         Vector2 mouse = GetMousePosition();
 
 
-        // Slowly spin so you can see it's a real triangle
-        heading += 1.0f * GetFrameTime();
+        // --- Controller: compute steering ---
+        const char* label = "";
+        SteeringOutput steering;
+        switch (mode) {
+        case Mode::Seek:    steering = Steering::Seek(agent, mouse); label = "1 - Seek";    break;
+		case Mode::Flee:    steering = Steering::Flee(agent, mouse); label = "2 - Flee";    break;
+        case Mode::Stop:    steering = Steering::Brake(agent);       label = "0 - Brake";   break;
+        }
 
-        const float size = 25.0f;
-        const float back = 140.0f * DEG2RAD;
+        // --- Agent: apply steering ---
+        agent.Update(steering, delta);
 
-        Vector2 tip = { pos.x + cosf(heading) * size,
-                         pos.y + sinf(heading) * size };
-        Vector2 left = { pos.x + cosf(heading - back) * size,
-                         pos.y + sinf(heading - back) * size };
-        Vector2 right = { pos.x + cosf(heading + back) * size,
-                         pos.y + sinf(heading + back) * size };
-
-
-		// --- Draw ---
+        // --- Draw ---
         BeginDrawing();
+
+        //// --- Environment --- 
         ClearBackground(DARKGREEN);
+        DrawText(label, 10, 10, 20, RAYWHITE);
 
-        DrawTriangle(tip, left, right, MAROON);  // counter-clockwise order
-        DrawText("Hello raylib", 10, 10, 20, DARKGRAY);
+        //// --- Objects ---
+        agent.Draw();
 
+
+		//// --- Debug ---
         DrawCircleV(mouse, 8.0f, Fade(SKYBLUE, 0.7f));
-        DrawCircleLinesV(mouse, 8.0f, DARKBLUE);
+        DrawCircleLinesV(mouse, 8.0f, RAYWHITE);
 
         EndDrawing();
     }

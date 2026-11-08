@@ -58,6 +58,24 @@ build CMakeFiles\GameAI.dir\GameAI.cpp.obj: CXX_COMPILER__GameAI_unscanned_Debug
   TARGET_COMPILE_PDB = CMakeFiles\GameAI.dir\
   TARGET_PDB = GameAI.pdb
 
+build CMakeFiles\GameAI.dir\Agent.cpp.obj: CXX_COMPILER__GameAI_unscanned_Debug C$:\Users\Alin1\Documents\Github\RayLibGameAI\GameAI\Agent.cpp || cmake_object_order_depends_target_GameAI
+  DEFINES = -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP
+  FLAGS = /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Ob0 /Od /RTC1 -std:c++20 -ZI
+  INCLUDES = -IC:\Users\Alin1\Documents\Github\RayLibGameAI\GameAI\out\build\x64-debug\_deps\raylib-src\src -IC:\Users\Alin1\Documents\Github\RayLibGameAI\GameAI\out\build\x64-debug\_deps\raylib-src\src\external\glfw\include
+  OBJECT_DIR = CMakeFiles\GameAI.dir
+  OBJECT_FILE_DIR = CMakeFiles\GameAI.dir
+  TARGET_COMPILE_PDB = CMakeFiles\GameAI.dir\
+  TARGET_PDB = GameAI.pdb
+
+build CMakeFiles\GameAI.dir\Steering.cpp.obj: CXX_COMPILER__GameAI_unscanned_Debug C$:\Users\Alin1\Documents\Github\RayLibGameAI\GameAI\Steering.cpp || cmake_object_order_depends_target_GameAI
+  DEFINES = -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP
+  FLAGS = /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Ob0 /Od /RTC1 -std:c++20 -ZI
+  INCLUDES = -IC:\Users\Alin1\Documents\Github\RayLibGameAI\GameAI\out\build\x64-debug\_deps\raylib-src\src -IC:\Users\Alin1\Documents\Github\RayLibGameAI\GameAI\out\build\x64-debug\_deps\raylib-src\src\external\glfw\include
+  OBJECT_DIR = CMakeFiles\GameAI.dir
+  OBJECT_FILE_DIR = CMakeFiles\GameAI.dir
+  TARGET_COMPILE_PDB = CMakeFiles\GameAI.dir\
+  TARGET_PDB = GameAI.pdb
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target GameAI
@@ -66,7 +84,7 @@ build CMakeFiles\GameAI.dir\GameAI.cpp.obj: CXX_COMPILER__GameAI_unscanned_Debug
 #############################################
 # Link the executable GameAI.exe
 
-build GameAI.exe: CXX_EXECUTABLE_LINKER__GameAI_Debug CMakeFiles\GameAI.dir\GameAI.cpp.obj | _deps\raylib-build\raylib\raylib.lib || _deps\raylib-build\raylib\external\glfw\src\glfw _deps\raylib-build\raylib\raylib.lib
+build GameAI.exe: CXX_EXECUTABLE_LINKER__GameAI_Debug CMakeFiles\GameAI.dir\GameAI.cpp.obj CMakeFiles\GameAI.dir\Agent.cpp.obj CMakeFiles\GameAI.dir\Steering.cpp.obj | _deps\raylib-build\raylib\raylib.lib || _deps\raylib-build\raylib\external\glfw\src\glfw _deps\raylib-build\raylib\raylib.lib
   FLAGS = /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Ob0 /Od /RTC1 -ZI
   LINK_FLAGS = /machine:x64 /debug /INCREMENTAL /subsystem:console
   LINK_LIBRARIES = _deps\raylib-build\raylib\raylib.lib  opengl32.lib  glu32.lib  winmm.lib  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib
