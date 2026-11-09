@@ -1,7 +1,15 @@
 #include "Steering.h"
 #include "raymath.h"
+#include <cmath>
 
 namespace Steering {
+    // Random value in [-1, 1], biased toward 0 (the book's "randomBinomial")
+    static float RandomBinomial()
+    {
+        float a = GetRandomValue(0, 1000) / 1000.0f;
+        float b = GetRandomValue(0, 1000) / 1000.0f;
+        return a - b;
+    }
 
     SteeringOutput Seek(const Agent& agent, Vector2 target)
     {
@@ -96,10 +104,51 @@ namespace Steering {
             prediction = distance / speed;
 
         // Where the target will be after that time
-        Vector2 future = Vector2Add(targetPos, Vector2Scale(targetVel, prediction));
+        Vector2 futurePosition = Vector2Add(targetPos, Vector2Scale(targetVel, prediction));
 
         // Seek the predicted point
-        return Seek(agent, future);
+        return Seek(agent, futurePosition);
+    }
+
+    SteeringOutput Evade(const Agent& agent, Vector2 targetPos, Vector2 targetVel, float maxPrediction)
+    {
+        Vector2 toTarget = Vector2Subtract(targetPos, agent.kinematic.position);
+        float distance = Vector2Length(toTarget);
+
+        // How fast the agent is currently moving
+        float speed = Vector2Length(agent.kinematic.velocity);
+
+        // Time to reach the target if it stood still, capped
+        float prediction;
+        if (speed <= distance / maxPrediction)
+            prediction = maxPrediction;
+        else
+            prediction = distance / speed;
+
+        // Where the target will be after that time
+        Vector2 futurePosition = Vector2Add(targetPos, Vector2Scale(targetVel, prediction));
+
+        // Seek the predicted point
+        return Flee(agent, futurePosition);
+    }
+
+    SteeringOutput Wander(const Agent& agent, WanderData& data, float delta)
+    {
+        // Nudge the target angle by a small random amount
+        data.angle += RandomBinomial() * data.rate * delta;
+
+        // Put the circle's center a fixed distance in front of the agent
+        data.circleCenter = Vector2Add(agent.kinematic.position,
+            Vector2Scale(agent.Forward(), data.offset));
+
+        // Find the point on the circle: the angle is relative to the agent's facing
+        float worldAngle = agent.kinematic.orientation + data.angle;
+        Vector2 onCircle = { cosf(worldAngle) * data.radius,
+                             sinf(worldAngle) * data.radius };
+        data.target = Vector2Add(data.circleCenter, onCircle);
+
+        // Seek that point
+        return Seek(agent, data.target);
     }
 
 } // namespace Steering
