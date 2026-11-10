@@ -41,13 +41,11 @@ namespace Steering {
         return out;
     }
 
-    SteeringOutput Forward(const Agent& agent)
-    {
-        SteeringOutput out;
-        out.linearAcceleration = Vector2Scale(agent.Forward(), agent.maxAcceleration);
-        return out;
-    }
-
+    /// <summary>
+    /// slow down to a stop, only used at startup
+    /// </summary>
+    /// <param name="agent"></param>
+    /// <returns></returns>
     SteeringOutput Brake(const Agent& agent)
     {
         SteeringOutput out;

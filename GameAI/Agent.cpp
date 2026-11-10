@@ -1,16 +1,27 @@
 #include "Agent.h"
 #include "raymath.h"   // Vector2Add, Vector2Scale, ...
+#include "SteeringBehavior.h"
+#include "World.h"
 #include <cmath>
 
+/// <summary>
+/// Constructor for an agent, setting its initial position.
+/// </summary>
+/// <param name="startPosition"></param>
 Agent::Agent(Vector2 startPosition)
 {
     kinematic.position = startPosition;
 }
 
+/// <summary>
+/// Returns the forward direction of the agent
+/// </summary>
+/// <returns></returns>
 Vector2 Agent::Forward() const
 {
     return { cosf(kinematic.orientation), sinf(kinematic.orientation) };
 }
+
 
 static float WrapAngle(float a)   // bring any angle into [-PI, PI]
 {
@@ -19,6 +30,11 @@ static float WrapAngle(float a)   // bring any angle into [-PI, PI]
     return a;
 }
 
+/// <summary>
+/// Apply the steering to the agent's kinematic state, Orient the agent if needed, and wrap around the screen.
+/// </summary>
+/// <param name="steering"></param>
+/// <param name="delta"></param>
 void Agent::Update(const SteeringOutput& steering, float delta)
 {
     // Move using the current velocity
@@ -49,6 +65,9 @@ void Agent::Update(const SteeringOutput& steering, float delta)
     if (kinematic.position.y > h) kinematic.position.y -= h;
 }
 
+/// <summary>
+/// Draw the agent as a triangle pointing in the direction of its orientation
+/// </summary>
 void Agent::Draw() const
 {
     const float size = 25.0f;
@@ -63,6 +82,10 @@ void Agent::Draw() const
     DrawTriangle(tip, left, right, MAROON);
 }
 
+/// <summary>
+/// Orient the agent to face the direction of movement, Only active if orientRotationToMovement is true
+/// </summary>
+/// <param name="delta"></param>
 void Agent::OrientRotationToMovement(float delta) {
     kinematic.rotation = 0.0f;   // not used in this mode
 
@@ -77,4 +100,15 @@ void Agent::OrientRotationToMovement(float delta) {
         kinematic.orientation += diff;
     }
 
+}
+
+/// <summary>
+/// Uses the agent's steering behaviour to compute the steering output for this agent and returns it. If the agent has no behavior, returns a zeroed SteeringOutput.
+/// </summary>
+/// <param name="world"></param>
+/// <returns></returns>
+SteeringOutput Agent::ComputeSteering(const World& world) const
+{
+    if (!behavior) return {};                 // no brain: no steering
+    return behavior->GetSteering(*this, world);
 }

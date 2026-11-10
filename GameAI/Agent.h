@@ -1,6 +1,10 @@
 #pragma once
 #include "raylib.h"
 
+class SteeringBehavior; // forward declaration
+struct World; // forward declaration
+
+
 struct Kinematic {
     Vector2 position = { 400.0f, 300.0f };
     Vector2 velocity = { 0.0f, 0.0f };
@@ -22,6 +26,8 @@ public:
 	bool orientRotationToMovement = true; // if true, agent will rotate to face the direction of movement
     float minFacingSpeed = 1.0f; // minimum speen necesarry for turning
 	float maxRotationSpeed = 10.0f; // maximum rotation speed in rad/s
+    float radius = 10.0f;
+    SteeringBehavior* behavior = nullptr;
 
     Agent() = default;
     explicit Agent(Vector2 startPosition);
@@ -30,4 +36,5 @@ public:
     void    Draw() const;
     Vector2 Forward() const;   // unit vector the agent is facing
 	void	OrientRotationToMovement(float delta); // update orientation to face the direction of movement
+	SteeringOutput ComputeSteering(const World& world) const;
 };
