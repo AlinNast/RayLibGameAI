@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include "raylib.h"
 
 class SteeringBehavior; // forward declaration
@@ -27,14 +28,20 @@ public:
     float minFacingSpeed = 1.0f; // minimum speen necesarry for turning
 	float maxRotationSpeed = 10.0f; // maximum rotation speed in rad/s
     float radius = 10.0f;
-    SteeringBehavior* behavior = nullptr;
+    std::unique_ptr<SteeringBehavior> behavior;   // the agent owns its current behavior
+    const char* behaviorLabel = "None";           // shown in the UI
 
-    Agent() = default;
+    Agent();
     explicit Agent(Vector2 startPosition);
+    ~Agent();
 
     void    Update(const SteeringOutput& steering, float dt);
-    void    Draw() const;
+    void    Draw(bool isSelected = false) const;
     Vector2 Forward() const;   // unit vector the agent is facing
 	void	OrientRotationToMovement(float delta); // update orientation to face the direction of movement
 	SteeringOutput ComputeSteering(const World& world) const;
+
+private:
+	Color defaultColor = { 20, 20, 20, 255 };
+	Color selectedColor = { 255, 255, 255, 255 };
 };

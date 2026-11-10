@@ -1,15 +1,66 @@
 ﻿#include "raylib.h"
 #include "raymath.h"
 #include <vector>
+#include <memory>
 #include "Agent.h"
 #include "World.h"
 #include "Behaviors.h"
 #include "CompositeSteeringBehaviors.h"
 
-enum class Mode { Seek, Flee, Arrive, Pursue, Evade, Wander, Stop };
-const float slowRadius = 200.0f;
-const float targetRadius = 10.0f;
-Vector2 lastMouse = { 0.0f, 0.0f };
+enum class BehaviorType { Seek, Flee, Arrive, Pursue, Evade, Wander, Brake, WanderApart, WanderAvoid };
+
+
+static void SetBehavior(Agent& agent, BehaviorType type, const Kinematic* target)
+{
+    switch (type) {
+    case BehaviorType::Seek:
+        agent.behavior = std::make_unique<SeekBehavior>(target);
+        agent.behaviorLabel = "1 - Seek"; break;
+    case BehaviorType::Flee:
+        agent.behavior = std::make_unique<FleeBehavior>(target);
+        agent.behaviorLabel = "2 - Flee"; break;
+    case BehaviorType::Arrive:
+        agent.behavior = std::make_unique<ArriveBehavior>(target, 10.0f, 200.0f);
+        agent.behaviorLabel = "3 - Arrive"; break;
+    case BehaviorType::Pursue:
+        agent.behavior = std::make_unique<PursueBehavior>(target);
+        agent.behaviorLabel = "4 - Pursue"; break;
+    case BehaviorType::Evade:
+        agent.behavior = std::make_unique<EvadeBehavior>(target);
+        agent.behaviorLabel = "5 - Evade"; break;
+    case BehaviorType::Wander:
+        agent.behavior = std::make_unique<WanderBehavior>();
+        agent.behaviorLabel = "6 - Wander"; break;
+    case BehaviorType::WanderApart: {
+        auto blend = std::make_unique<BlendedSteeringBehavior>();
+        blend->AddBehavior(std::make_unique<WanderBehavior>(), 1.0f);
+        blend->AddBehavior(std::make_unique<SeparationBehavior>(100.0f, 200000.0f), 10.0f);
+        agent.behavior = std::move(blend);
+        agent.behaviorLabel = "7 - Wander + Separation"; break;
+    }
+    case BehaviorType::WanderAvoid: {
+        auto blend = std::make_unique<PrioritySteeringBehavior>();
+        blend->Add(std::make_unique<CollisionAvoidanceBehavior>(10.0f, 15.0f));
+        blend->Add(std::make_unique<WanderBehavior>());
+        agent.behavior = std::move(blend);
+        agent.behaviorLabel = "8 - Wander + Collision Avoidance"; break;
+    }
+    case BehaviorType::Brake:
+        agent.behavior = std::make_unique<BrakeBehavior>();
+        agent.behaviorLabel = "0 - Brake"; break;
+    }
+}
+
+
+static Agent* PickAgent(const std::vector<std::unique_ptr<Agent>>& agents,
+    Vector2 point, float pickRadius)
+{
+    for (const auto& a : agents)
+        if (CheckCollisionPointCircle(point, a->kinematic.position, pickRadius))
+            return a.get();
+    return nullptr;
+}
+
 
 
 int main()
@@ -19,40 +70,29 @@ int main()
 
 	// --- Setup ---
 	World world;
+    std::vector<std::unique_ptr<Agent>> agents;   // the owner
+    Agent* selected = nullptr;
+
     ///// --- Mouse as a target with kinematic data ---
     Kinematic mouseTarget;
     mouseTarget.position = GetMousePosition();
     Vector2 lastMouse = mouseTarget.position;
 
     ///// --- Agents ---
-    Agent agent({ 400.0f, 300.0f });
-    world.agents.push_back(&agent);
+    auto spawn = [&](Vector2 pos) {
+        agents.push_back(std::make_unique<Agent>(pos));
+        Agent* a = agents.back().get();
+        world.agents.push_back(a);
+        SetBehavior(*a, BehaviorType::Brake, &mouseTarget);
+        selected = a;                              // new agent becomes the active one
+    };
+    spawn({ 400.0f, 300.0f });
 
-    ///// --- Behaviors (created here, they must outlive the agents using them) ---
-    SeekBehavior   seek(&mouseTarget);
-    FleeBehavior   flee(&mouseTarget);
-    ArriveBehavior arrive(&mouseTarget, 10.0f, 200.0f);
-    PursueBehavior pursue(&mouseTarget);
-    EvadeBehavior  evade(&mouseTarget);
-    WanderBehavior wander;
-    BrakeBehavior  brake;
-
-    agent.behavior = &brake;
-    const char* label = "0 - Brake";
+    
 
     while (!WindowShouldClose()) {
 		float delta = GetFrameTime(); // seconds since last frame
 		world.deltaTime = delta;
-
-        // --- Keyboad Input ---
-        if (IsKeyPressed(KEY_ONE)) { agent.behavior = &seek;   label = "1 - Seek"; }
-		if (IsKeyPressed(KEY_TWO)) { agent.behavior = &flee;   label = "2 - Flee"; }
-		if (IsKeyPressed(KEY_THREE)) { agent.behavior = &arrive; label = "3 - Arrive"; }
-		if (IsKeyPressed(KEY_FOUR)) { agent.behavior = &pursue; label = "4 - Pursue"; }
-		if (IsKeyPressed(KEY_FIVE)) { agent.behavior = &evade;  label = "5 - Evade"; }
-		if (IsKeyPressed(KEY_SIX)) { agent.behavior = &wander; label = "6 - Wander"; }
-		if (IsKeyPressed(KEY_ZERO)) { agent.behavior = &brake;  label = "0 - Brake"; }
-
 
 		// --- Update mouse target ---
         Vector2 mouse = GetMousePosition();
@@ -61,14 +101,47 @@ int main()
         mouseTarget.position = mouse;
         lastMouse = mouse;
 
+		// --- Spawn input ---
+        if (IsKeyPressed(KEY_N)) spawn(mouse);
+
+		// --- Select input ---
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+            selected = PickAgent(agents, mouse, 25.0f);   // nullptr = deselect
+
+        // --- Command Input ---
+        if (selected) {
+            if (IsKeyPressed(KEY_ONE))   SetBehavior(*selected, BehaviorType::Seek, &mouseTarget);
+            if (IsKeyPressed(KEY_TWO))   SetBehavior(*selected, BehaviorType::Flee, &mouseTarget);
+            if (IsKeyPressed(KEY_THREE)) SetBehavior(*selected, BehaviorType::Arrive, &mouseTarget);
+            if (IsKeyPressed(KEY_FOUR))  SetBehavior(*selected, BehaviorType::Pursue, &mouseTarget);
+            if (IsKeyPressed(KEY_FIVE))  SetBehavior(*selected, BehaviorType::Evade, &mouseTarget);
+            if (IsKeyPressed(KEY_SIX))   SetBehavior(*selected, BehaviorType::Wander, &mouseTarget);
+            if (IsKeyPressed(KEY_SEVEN)) SetBehavior(*selected, BehaviorType::WanderApart, &mouseTarget);
+            if (IsKeyPressed(KEY_EIGHT)) SetBehavior(*selected, BehaviorType::WanderAvoid, &mouseTarget);
+            if (IsKeyPressed(KEY_ZERO))  SetBehavior(*selected, BehaviorType::Brake, &mouseTarget);
+        }
+
+        // --- Delete input ---
+        if (IsKeyPressed(KEY_D) && selected) {
+            std::erase(world.agents, selected);                     // 1. remove it from the world
+            std::erase_if(agents, [&](const std::unique_ptr<Agent>& a) {
+                return a.get() == selected;                         // 2. destroy it (unique_ptr frees it)
+                });
+            selected = nullptr;                                     // 3. nothing dangling
+        }
+
+
+
         
 
         // --- Agent: apply steering ---
-		//// --- Compute steering for all agents in the world ---
-        std::vector<SteeringOutput> outputs; // holds results
+        
+        //// --- Compute steering for all agents in the world ---
+        std::vector<SteeringOutput> outputs;
         outputs.reserve(world.agents.size());
         for (Agent* a : world.agents)
             outputs.push_back(a->ComputeSteering(world));
+
         //// --- Apply steering for all agents ---
         for (size_t i = 0; i < world.agents.size(); ++i)
             world.agents[i]->Update(outputs[i], delta);
@@ -78,23 +151,26 @@ int main()
 
         //// --- Environment --- 
         ClearBackground(DARKGREEN);
-        DrawText(label, 10, 10, 20, RAYWHITE);
+        DrawText(selected ? TextFormat("Selected: %s", selected->behaviorLabel) : "Nothing selected (click an agent, N = spawn)", 10, 10, 20, RAYWHITE);
+        DrawText(TextFormat("Agents: %d", (int)agents.size()), 10, 35, 20, RAYWHITE);
 
         //// --- Objects ---
-        for (Agent* a : world.agents) a->Draw();
+        for (const auto& a : agents) a->Draw(a.get() == selected);
 
 
 		//// --- Debug ---
         DrawCircleV(mouse, 8.0f, Fade(SKYBLUE, 0.7f));
         DrawCircleLinesV(mouse, 8.0f, RAYWHITE);
-        if (agent.behavior == &arrive) {
-            DrawCircleLinesV(mouse, arrive.slowRadius, Fade(YELLOW, 0.6f));
-            DrawCircleLinesV(mouse, arrive.targetRadius, Fade(RED, 0.8f));
-        }
-        if (agent.behavior == &wander) {
-            DrawCircleLinesV(wander.data.circleCenter, wander.data.radius, Fade(YELLOW, 0.6f));
-            DrawCircleV(wander.data.target, 5.0f, RED);
-            DrawLineV(agent.kinematic.position, wander.data.target, Fade(RAYWHITE, 0.4f));
+        if (selected) {
+            if (auto* ar = dynamic_cast<ArriveBehavior*>(selected->behavior.get())) {
+                DrawCircleLinesV(mouse, ar->slowRadius, Fade(YELLOW, 0.6f));
+                DrawCircleLinesV(mouse, ar->targetRadius, Fade(RED, 0.8f));
+            }
+            if (auto* wa = dynamic_cast<WanderBehavior*>(selected->behavior.get())) {
+                DrawCircleLinesV(wa->data.circleCenter, wa->data.radius, Fade(YELLOW, 0.6f));
+                DrawCircleV(wa->data.target, 5.0f, RED);
+                DrawLineV(selected->kinematic.position, wa->data.target, Fade(RAYWHITE, 0.4f));
+            }
         }
 
         EndDrawing();

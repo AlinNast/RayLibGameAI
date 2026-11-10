@@ -1,6 +1,7 @@
 #pragma once
 #include <cmath>
 #include <vector>
+#include <memory>
 #include "raymath.h"
 #include "SteeringBehavior.h"
 
@@ -12,9 +13,9 @@ public:
     /// </summary>
     /// <param name="behavior"></param>
     /// <param name="weight"></param>
-    void AddBehavior(SteeringBehavior* behavior, float weight)
+    void AddBehavior(std::unique_ptr<SteeringBehavior> behavior, float weight)
     {
-        items.push_back({ behavior, weight });
+        items.push_back({ std::move(behavior), weight });
     }
 
     /// <summary>
@@ -42,8 +43,8 @@ public:
     }
 
 private:
-    struct Item { SteeringBehavior* behavior; float weight; };
-	std::vector<Item> items; // holds the behaviors and their weights
+    struct Item { std::unique_ptr<SteeringBehavior> behavior; float weight; };
+    std::vector<Item> items; // holds the behaviors and their weights
 };
 
 // First behavior that has something to say wins
@@ -53,7 +54,10 @@ public:
     /// Add a behavior to the list of behaviors.
     /// </summary>
     /// <param name="behavior"></param>
-    void Add(SteeringBehavior* behavior) { items.push_back(behavior); }
+    void Add(std::unique_ptr<SteeringBehavior> behavior)
+    {
+        items.push_back(std::move(behavior));
+    }
 
     /// <summary>
     /// Returns the first behavior that has a non-zero steering output. (clamped) 
@@ -64,17 +68,17 @@ public:
     SteeringOutput GetSteering(const Agent& agent, const World& world) override
     {
         SteeringOutput result;
-        for (SteeringBehavior* item : items) {
+        for (auto& item : items) {
             result = item->GetSteering(agent, world);
             if (Vector2Length(result.linearAcceleration) > threshold ||
                 fabsf(result.angularAcceleration) > threshold)
                 return result;
         }
-        return result;   // nobody spoke up: return the last (usually "do nothing")
+        return result;
     }
 
     float threshold = 0.001f;
 
 private:
-    std::vector<SteeringBehavior*> items;
+    std::vector<std::unique_ptr<SteeringBehavior>> items;
 };

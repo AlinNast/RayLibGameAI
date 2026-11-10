@@ -12,7 +12,8 @@ Agent::Agent(Vector2 startPosition)
 {
     kinematic.position = startPosition;
 }
-
+Agent::Agent() = default;
+Agent::~Agent() = default;
 /// <summary>
 /// Returns the forward direction of the agent
 /// </summary>
@@ -68,7 +69,7 @@ void Agent::Update(const SteeringOutput& steering, float delta)
 /// <summary>
 /// Draw the agent as a triangle pointing in the direction of its orientation
 /// </summary>
-void Agent::Draw() const
+void Agent::Draw(bool isSelected) const
 {
     const float size = 25.0f;
     const float back = 140.0f * DEG2RAD;
@@ -79,7 +80,7 @@ void Agent::Draw() const
     Vector2 left = { p.x + cosf(o - back) * size, p.y + sinf(o - back) * size };
     Vector2 right = { p.x + cosf(o + back) * size, p.y + sinf(o + back) * size };
 
-    DrawTriangle(tip, left, right, MAROON);
+    DrawTriangle(tip, left, right, isSelected ? selectedColor : defaultColor);
 }
 
 /// <summary>
@@ -105,7 +106,7 @@ void Agent::OrientRotationToMovement(float delta) {
 /// <summary>
 /// Uses the agent's steering behaviour to compute the steering output for this agent and returns it. If the agent has no behavior, returns a zeroed SteeringOutput.
 /// </summary>
-/// <param name="world"></param>
+/// <param name="world">a reference to the world is needed for the agent to know what is out there</param>
 /// <returns></returns>
 SteeringOutput Agent::ComputeSteering(const World& world) const
 {
