@@ -2,8 +2,11 @@
 #include "SteeringBehavior.h"
 #include "Steering.h"
 #include "raymath.h"
+#include "Collision.h"
 #include <cmath>
 #include <functional>
+#include <array>
+#include "Path.h"
 
 
 class SeekBehavior : public SteeringBehavior {
@@ -186,4 +189,122 @@ public:
 
     float maxLookAhead;   // seconds to look into the future
     float margin;         // extra personal space added to both radii (px)
+};
+
+class ObstacleAvoidanceBehavior : public SteeringBehavior {
+public:
+    ObstacleAvoidanceBehavior(float lookAhead = 120.0f, float whiskerAngleDeg = 35.0f)
+        : lookAhead(lookAhead), whiskerAngle(whiskerAngleDeg* DEG2RAD) {
+    }
+
+    SteeringOutput GetSteering(const Agent& agent, const World& world) override
+    {
+        steering = false;
+        const Vector2 pos = agent.kinematic.position;
+
+        // Heading: along the velocity, or the facing if almost stationary
+        Vector2 dir = (Vector2Length(agent.kinematic.velocity) > 1.0f)
+            ? Vector2Normalize(agent.kinematic.velocity)
+            : agent.Forward();
+        const Vector2 right = Vector2Rotate(dir, PI / 2.0f);   // the agent's right-hand side
+
+        struct RayDef { Vector2 dir; float length; };
+        const RayDef defs[3] = {
+            { dir,                                lookAhead },         // 0: center
+            { Vector2Rotate(dir,  whiskerAngle),  lookAhead * 0.6f },  // 1: right whisker
+            { Vector2Rotate(dir, -whiskerAngle),  lookAhead * 0.6f },  // 2: left whisker
+        };
+
+        float   closeness[3] = { 0.0f, 0.0f, 0.0f };   // 0 = no hit, 1 = touching
+        Vector2 centerNormal = { 0.0f, 0.0f };
+
+        for (int i = 0; i < 3; ++i) {
+            // Nearest hit of THIS ray only
+            RayHit best;
+            auto consider = [&](const RayHit& h) {
+                if (h.hit && (!best.hit || h.distance < best.distance)) best = h;
+                };
+            for (const Circle& c : world.obstacles)
+                consider(RayVsCircle(pos, defs[i].dir, defs[i].length, c, agent.radius));
+            for (const Wall& w : world.walls)
+                consider(RayVsWall(pos, defs[i].dir, defs[i].length, w));
+
+            whiskers[i] = { pos, Vector2Add(pos, Vector2Scale(defs[i].dir, defs[i].length)), best.hit };
+            if (!best.hit) continue;
+
+            closeness[i] = 1.0f - best.distance / defs[i].length;
+            if (i == 0) centerNormal = best.normal;
+        }
+
+        if (closeness[0] <= 0.0f && closeness[1] <= 0.0f && closeness[2] <= 0.0f)
+            return {};                                   // path is clear: say nothing
+
+        // Positive = turn right, negative = turn left
+        float side = closeness[2] - closeness[1];        // left hit -> right, right hit -> left
+        if (closeness[0] > 0.0f) {
+            float facing = Vector2DotProduct(centerNormal, right);
+            float sign = (fabsf(facing) < 0.01f || facing > 0.0f) ? 1.0f : -1.0f;
+            side += sign * closeness[0];                 // surface faces right -> turn right
+        }
+        float turn = (side >= 0.0f) ? 1.0f : -1.0f;      // only the sign matters
+
+        steerDir = Vector2Scale(right, turn);
+        steering = true;
+
+        SteeringOutput out;
+        out.linearAcceleration = Vector2Scale(steerDir, agent.maxAcceleration);
+        return out;
+    }
+
+    void DebugDraw() const override
+    {
+        for (const Whisker& w : whiskers)
+            DrawLineV(w.start, w.end, w.hit ? RED : Fade(RAYWHITE, 0.5f));
+        if (steering)
+            DrawLineEx(whiskers[0].start,
+                Vector2Add(whiskers[0].start, Vector2Scale(steerDir, 50.0f)),
+                3.0f, ORANGE);
+    }
+
+    float lookAhead;      // length of the center ray (px)
+    float whiskerAngle;   // angle of the side rays (radians)
+
+private:
+    struct Whisker { Vector2 start{}, end{}; bool hit = false; };
+    Whisker whiskers[3];
+    Vector2 steerDir = { 0, 0 };
+    bool    steering = false;
+};
+
+
+
+class PathFollowBehavior : public SteeringBehavior {
+public:
+    PathFollowBehavior(const Path* path, float pathOffset = 50.0f) : path(path), pathOffset(pathOffset) { }
+
+    SteeringOutput GetSteering(const Agent& agent, const World&) override
+    {
+        // 1. Where on the path am I closest to? (a distance in px along the path)
+        float param = path->GetParam(agent.kinematic.position);
+        closest = path->GetPosition(param);
+
+        // 2. The carrot: a point pathOffset px further along the path
+        target = path->GetPosition(param + pathOffset);
+
+        // 3. Seek the carrot
+        return Steering::Seek(agent, target);
+    }
+
+    void DebugDraw() const override
+    {
+        DrawCircleV(closest, 5.0f, RED);       // closest point on the path
+        DrawCircleV(target, 6.0f, ORANGE);     // the carrot being chased
+    }
+
+    const Path* path;       // shared, read-only
+    float pathOffset;       // carrot distance ahead (px)
+
+private:
+    Vector2 closest = { 0, 0 };
+    Vector2 target = { 0, 0 };
 };

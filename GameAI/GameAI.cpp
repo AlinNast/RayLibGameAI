@@ -7,10 +7,11 @@
 #include "Behaviors.h"
 #include "CompositeSteeringBehaviors.h"
 
-enum class BehaviorType { Seek, Flee, Arrive, Pursue, Evade, Wander, Brake, WanderApart, WanderAvoid };
+enum class BehaviorType { Seek, Flee, Arrive, Pursue, Evade, Wander, Brake, WanderApart, WanderAvoid, PathFollow };
 
 
-static void SetBehavior(Agent& agent, BehaviorType type, const Kinematic* target)
+
+static void SetBehavior(Agent& agent, BehaviorType type, const Kinematic* target, const Path& path)
 {
     switch (type) {
     case BehaviorType::Seek:
@@ -35,15 +36,32 @@ static void SetBehavior(Agent& agent, BehaviorType type, const Kinematic* target
         auto blend = std::make_unique<BlendedSteeringBehavior>();
         blend->AddBehavior(std::make_unique<WanderBehavior>(), 1.0f);
         blend->AddBehavior(std::make_unique<SeparationBehavior>(100.0f, 200000.0f), 10.0f);
-        agent.behavior = std::move(blend);
+
+        auto priority = std::make_unique<PrioritySteeringBehavior>();
+        priority->Add(std::make_unique<ObstacleAvoidanceBehavior>());   // 1st: never hit a wall
+        priority->Add(std::move(blend));                                // 2nd: normal behavior
+        agent.behavior = std::move(priority);
         agent.behaviorLabel = "7 - Wander + Separation"; break;
     }
     case BehaviorType::WanderAvoid: {
-        auto blend = std::make_unique<PrioritySteeringBehavior>();
-        blend->Add(std::make_unique<CollisionAvoidanceBehavior>(10.0f, 15.0f));
-        blend->Add(std::make_unique<WanderBehavior>());
-        agent.behavior = std::move(blend);
+        auto priority = std::make_unique<PrioritySteeringBehavior>();
+		priority->Add(std::make_unique<ObstacleAvoidanceBehavior>());   // 1st: never hit a wall
+		priority->Add(std::make_unique<CollisionAvoidanceBehavior>(10.0f, 15.0f)); // 2nd: never hit another agent
+		priority->Add(std::make_unique<WanderBehavior>());              /// 3rd: normal behavior
+        agent.behavior = std::move(priority);
         agent.behaviorLabel = "8 - Wander + Collision Avoidance"; break;
+    }
+    case BehaviorType::PathFollow: {
+        auto travel = std::make_unique<BlendedSteeringBehavior>();
+        travel->AddBehavior(std::make_unique<PathFollowBehavior>(&path, 50.0f), 1.0f);
+        travel->AddBehavior(std::make_unique<SeparationBehavior>(100.0f, 200000.0f), 3.0f);
+
+        auto brain = std::make_unique<PrioritySteeringBehavior>();
+        brain->Add(std::make_unique<ObstacleAvoidanceBehavior>());                 // 1st: geometry
+        brain->Add(std::make_unique<CollisionAvoidanceBehavior>(2.0f, 10.0f));     // 2nd: other agents
+        brain->Add(std::move(travel));                                             // 3rd: follow the path
+        agent.behavior = std::move(brain);
+        agent.behaviorLabel = "9 - Path Follow"; break;
     }
     case BehaviorType::Brake:
         agent.behavior = std::make_unique<BrakeBehavior>();
@@ -72,6 +90,13 @@ int main()
 	World world;
     std::vector<std::unique_ptr<Agent>> agents;   // the owner
     Agent* selected = nullptr;
+    world.obstacles.push_back({ { 450.0f, 450.0f }, 70.0f });
+    world.obstacles.push_back({ { 850.0f, 250.0f }, 50.0f });
+    world.walls.push_back({ { 700.0f, 500.0f }, { 700.0f, 800.0f } });
+    Path path({
+    { 150.0f, 150.0f }, { 600.0f, 100.0f }, { 1050.0f, 150.0f }, { 1100.0f, 500.0f },
+    { 1000.0f, 820.0f }, { 550.0f, 840.0f }, { 200.0f, 780.0f }, { 300.0f, 450.0f }
+    }, true);
 
     ///// --- Mouse as a target with kinematic data ---
     Kinematic mouseTarget;
@@ -83,7 +108,7 @@ int main()
         agents.push_back(std::make_unique<Agent>(pos));
         Agent* a = agents.back().get();
         world.agents.push_back(a);
-        SetBehavior(*a, BehaviorType::Brake, &mouseTarget);
+        SetBehavior(*a, BehaviorType::Brake, &mouseTarget, path);
         selected = a;                              // new agent becomes the active one
     };
     spawn({ 400.0f, 300.0f });
@@ -110,15 +135,16 @@ int main()
 
         // --- Command Input ---
         if (selected) {
-            if (IsKeyPressed(KEY_ONE))   SetBehavior(*selected, BehaviorType::Seek, &mouseTarget);
-            if (IsKeyPressed(KEY_TWO))   SetBehavior(*selected, BehaviorType::Flee, &mouseTarget);
-            if (IsKeyPressed(KEY_THREE)) SetBehavior(*selected, BehaviorType::Arrive, &mouseTarget);
-            if (IsKeyPressed(KEY_FOUR))  SetBehavior(*selected, BehaviorType::Pursue, &mouseTarget);
-            if (IsKeyPressed(KEY_FIVE))  SetBehavior(*selected, BehaviorType::Evade, &mouseTarget);
-            if (IsKeyPressed(KEY_SIX))   SetBehavior(*selected, BehaviorType::Wander, &mouseTarget);
-            if (IsKeyPressed(KEY_SEVEN)) SetBehavior(*selected, BehaviorType::WanderApart, &mouseTarget);
-            if (IsKeyPressed(KEY_EIGHT)) SetBehavior(*selected, BehaviorType::WanderAvoid, &mouseTarget);
-            if (IsKeyPressed(KEY_ZERO))  SetBehavior(*selected, BehaviorType::Brake, &mouseTarget);
+            if (IsKeyPressed(KEY_ONE))   SetBehavior(*selected, BehaviorType::Seek, &mouseTarget, path);
+            if (IsKeyPressed(KEY_TWO))   SetBehavior(*selected, BehaviorType::Flee, &mouseTarget, path);
+            if (IsKeyPressed(KEY_THREE)) SetBehavior(*selected, BehaviorType::Arrive, &mouseTarget, path);
+            if (IsKeyPressed(KEY_FOUR))  SetBehavior(*selected, BehaviorType::Pursue, &mouseTarget, path);
+            if (IsKeyPressed(KEY_FIVE))  SetBehavior(*selected, BehaviorType::Evade, &mouseTarget, path);
+            if (IsKeyPressed(KEY_SIX))   SetBehavior(*selected, BehaviorType::Wander, &mouseTarget, path);
+            if (IsKeyPressed(KEY_SEVEN)) SetBehavior(*selected, BehaviorType::WanderApart, &mouseTarget, path);
+            if (IsKeyPressed(KEY_EIGHT)) SetBehavior(*selected, BehaviorType::WanderAvoid, &mouseTarget, path);
+            if (IsKeyPressed(KEY_NINE)) SetBehavior(*selected, BehaviorType::PathFollow, &mouseTarget, path);
+            if (IsKeyPressed(KEY_ZERO))  SetBehavior(*selected, BehaviorType::Brake, &mouseTarget, path);
         }
 
         // --- Delete input ---
@@ -156,6 +182,13 @@ int main()
 
         //// --- Objects ---
         for (const auto& a : agents) a->Draw(a.get() == selected);
+        for (const Circle& c : world.obstacles) {
+            DrawCircleV(c.center, c.radius, DARKGRAY);
+            DrawCircleLinesV(c.center, c.radius, RAYWHITE);
+        }
+        for (const Wall& w : world.walls)
+            DrawLineEx(w.a, w.b, 6.0f, LIGHTGRAY);
+        path.Draw();
 
 
 		//// --- Debug ---
@@ -172,6 +205,7 @@ int main()
                 DrawLineV(selected->kinematic.position, wa->data.target, Fade(RAYWHITE, 0.4f));
             }
         }
+        if (selected && selected->behavior) selected->behavior->DebugDraw();
 
         EndDrawing();
     }

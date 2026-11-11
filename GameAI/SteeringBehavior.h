@@ -9,4 +9,5 @@ class SteeringBehavior {
 public:
     virtual ~SteeringBehavior() = default;
     virtual SteeringOutput GetSteering(const Agent& agent, const World& world) = 0;
+    virtual void DebugDraw() const {}      // optional: most behaviors draw nothing
 };

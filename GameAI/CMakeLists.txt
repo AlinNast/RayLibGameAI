@@ -18,7 +18,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(raylib)
 
-add_executable (GameAI "GameAI.cpp" "GameAI.h" "Agent.cpp" "Agent.h" "Steering.cpp" "Steering.h" "SteeringBehavior.h" "World.h" "Behaviors.h" "CompositeSteeringBehaviors.h")
+add_executable (GameAI "GameAI.cpp" "GameAI.h" "Agent.cpp" "Agent.h" "Steering.cpp" "Steering.h" "SteeringBehavior.h" "World.h" "Behaviors.h" "CompositeSteeringBehaviors.h" "Collision.h" "Path.h")
 target_link_libraries(GameAI raylib)
 
 set_property(TARGET GameAI PROPERTY CXX_STANDARD 20)

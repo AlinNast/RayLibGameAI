@@ -42,6 +42,12 @@ public:
         return total;
     }
 
+    void DebugDraw() const override 
+    { 
+        for (const Item& i : items) i.behavior->DebugDraw(); 
+    }
+
+
 private:
     struct Item { std::unique_ptr<SteeringBehavior> behavior; float weight; };
     std::vector<Item> items; // holds the behaviors and their weights
@@ -75,6 +81,12 @@ public:
                 return result;
         }
         return result;
+    }
+
+
+    void DebugDraw() const override 
+    { 
+        for (const auto& i : items) i->DebugDraw(); 
     }
 
     float threshold = 0.001f;

@@ -183,7 +183,9 @@
 				6,
 				7,
 				8,
-				9
+				9,
+				10,
+				11
 			]
 		}
 	],
@@ -240,6 +242,16 @@
 		{
 			"backtrace" : 1,
 			"path" : "CompositeSteeringBehaviors.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "Collision.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "Path.h",
 			"sourceGroupIndex" : 1
 		}
 	],
