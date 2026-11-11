@@ -13,7 +13,7 @@
 23	583	8160376772704890	CMakeFiles/GameAI.dir/Agent.cpp.obj	86ce4abdb2ac2d0f
 87	486	8157541949640178	_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/win32_thread.c.obj	5296e676f6275374
 211	565	8157541950882270	_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/wgl_context.c.obj	99f00c74e78b7fee
-710	839	8160392323163078	GameAI.exe	c6e2dc569e022c94
+773	944	8161076542075593	GameAI.exe	c6e2dc569e022c94
 77	489	8157541949534963	_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/null_joystick.c.obj	a663bea29e94c2cd
 51	496	8157541949281139	_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/vulkan.c.obj	29bbe5296fb41def
 44	505	8157541949216087	_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/monitor.c.obj	cdb8528cf52b15a7
@@ -30,7 +30,7 @@
 41	528	8157541949177526	_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/input.c.obj	9eea686b920d994c
 98	530	8157541949756581	_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/win32_monitor.c.obj	ea0ba427e224c0af
 205	560	8157541950827176	_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/win32_window.c.obj	6247fbf5c60d7e4e
-19	709	8160392316257094	CMakeFiles/GameAI.dir/GameAI.cpp.obj	d54dab815a451016
+39	772	8161076534735962	CMakeFiles/GameAI.dir/GameAI.cpp.obj	d54dab815a451016
 27	285	8160286039326689	CMakeFiles/GameAI.dir/Steering.cpp.obj	5d9008f1c1505f27
-10	453	8160445431219446	CMakeFiles/GameAI.dir/GameAI.cpp.obj	d54dab815a451016
-454	639	8160445435655024	GameAI.exe	c6e2dc569e022c94
+10	723	8161112854721004	CMakeFiles/GameAI.dir/GameAI.cpp.obj	d54dab815a451016
+724	856	8161112861855832	GameAI.exe	c6e2dc569e022c94

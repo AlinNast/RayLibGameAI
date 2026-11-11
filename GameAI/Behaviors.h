@@ -7,6 +7,7 @@
 #include <functional>
 #include <array>
 #include "Path.h"
+#include "Formation.h"
 
 
 class SeekBehavior : public SteeringBehavior {
@@ -307,4 +308,44 @@ public:
 private:
     Vector2 closest = { 0, 0 };
     Vector2 target = { 0, 0 };
+};
+
+
+class FormationSlotBehavior : public SteeringBehavior {
+public:
+    FormationSlotBehavior(const Formation* formation, int slot, float slowRadius = 80.0f, float timeToTarget = 0.1f) : formation(formation), slot(slot), slowRadius(slowRadius), timeToTarget(timeToTarget) {}
+
+    SteeringOutput GetSteering(const Agent& agent, const World&) override
+    {
+        slotPos = formation->SlotWorldPosition(slot);
+        Vector2 toSlot = Vector2Subtract(slotPos, agent.kinematic.position);
+        float   dist = Vector2Length(toSlot);
+
+        // Start from the slot's own velocity (the leader's)...
+        Vector2 desired = formation->leader->kinematic.velocity;
+
+        // ...and add a closing velocity toward the slot that fades to 0 on arrival
+        if (dist > 0.0001f) {
+            float closing = fminf(dist / slowRadius, 1.0f) * agent.maxSpeed;
+            desired = Vector2Add(desired, Vector2Scale(Vector2Normalize(toSlot), closing));
+        }
+
+        // Same as Arrive: acceleration needed to reach the desired velocity
+        Vector2 accel = Vector2Scale(
+            Vector2Subtract(desired, agent.kinematic.velocity), 1.0f / timeToTarget);
+        if (Vector2Length(accel) > agent.maxAcceleration)
+            accel = Vector2Scale(Vector2Normalize(accel), agent.maxAcceleration);
+
+        SteeringOutput out;
+        out.linearAcceleration = accel;
+        return out;
+    }
+
+    const Formation* formation;   // not owned
+    int   slot;
+    float slowRadius;
+    float timeToTarget;
+
+private:
+    Vector2 slotPos = { 0, 0 };
 };
