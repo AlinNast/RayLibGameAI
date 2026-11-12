@@ -11,6 +11,8 @@ endif()
 
 project ("GameAI")
 
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 include(FetchContent)
 FetchContent_Declare(
     raylib

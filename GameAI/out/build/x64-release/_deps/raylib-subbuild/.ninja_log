@@ -1,0 +1,21 @@
+# ninja log v6
+3	55	8161991756373759	raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-mkdir	73a5508b193f7fa9
+8436	8483	8161991840635475	C:/Users/Alin1/Documents/Github/RayLibGameAI/GameAI/out/build/x64-release/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-patch	52efb8985c081faa
+3	55	8161991756373759	C:/Users/Alin1/Documents/Github/RayLibGameAI/GameAI/out/build/x64-release/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-mkdir	73a5508b193f7fa9
+57	8390	8161991839765756	raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-download	742d28b0c3b0444f
+57	8390	8161991839765756	C:/Users/Alin1/Documents/Github/RayLibGameAI/GameAI/out/build/x64-release/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-download	742d28b0c3b0444f
+8390	8436	8161991840221969	raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-update	4db7dfa9d921cfa8
+8390	8436	8161991840221969	C:/Users/Alin1/Documents/Github/RayLibGameAI/GameAI/out/build/x64-release/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-update	4db7dfa9d921cfa8
+8436	8483	8161991840635475	raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-patch	52efb8985c081faa
+8484	8530	8161991841166578	raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-configure	c8362eae3c25a042
+8484	8530	8161991841166578	C:/Users/Alin1/Documents/Github/RayLibGameAI/GameAI/out/build/x64-release/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-configure	c8362eae3c25a042
+8625	8671	8161991842566864	C:/Users/Alin1/Documents/Github/RayLibGameAI/GameAI/out/build/x64-release/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-test	f1a3888992fc76f9
+8531	8577	8161991841637552	raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-build	8c0e3801806512da
+8531	8577	8161991841637552	C:/Users/Alin1/Documents/Github/RayLibGameAI/GameAI/out/build/x64-release/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-build	8c0e3801806512da
+8577	8625	8161991842102887	raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-install	3a91afd5e038f855
+8577	8625	8161991842102887	C:/Users/Alin1/Documents/Github/RayLibGameAI/GameAI/out/build/x64-release/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-install	3a91afd5e038f855
+8625	8671	8161991842566864	raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-test	f1a3888992fc76f9
+8671	8733	8161991843172870	CMakeFiles/raylib-populate-complete	12d5926b2bd763c0
+8671	8733	8161991843172870	raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-done	12d5926b2bd763c0
+8671	8733	8161991843172870	C:/Users/Alin1/Documents/Github/RayLibGameAI/GameAI/out/build/x64-release/_deps/raylib-subbuild/CMakeFiles/raylib-populate-complete	12d5926b2bd763c0
+8671	8733	8161991843172870	C:/Users/Alin1/Documents/Github/RayLibGameAI/GameAI/out/build/x64-release/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-done	12d5926b2bd763c0
