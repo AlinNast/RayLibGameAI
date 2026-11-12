@@ -1,8 +1,9 @@
 #include "Agent.h"
-#include "raymath.h"   // Vector2Add, Vector2Scale, ...
+#include "raymath.h"   // Vector2Add, Vector2Scale, ... come from here
 #include "SteeringBehavior.h"
 #include "World.h"
 #include <cmath>
+
 
 /// <summary>
 /// Constructor for an agent, setting its initial position.
@@ -14,13 +15,15 @@ Agent::Agent(Vector2 startPosition)
 }
 Agent::Agent() = default;
 Agent::~Agent() = default;
+
+
 /// <summary>
-/// Returns the forward direction of the agent
+/// Returns the forward direction of the agent (unit vector in the direction of its orientation).
 /// </summary>
-/// <returns></returns>
+/// <returns>(unit vector in the direction of its orientation).</returns>
 Vector2 Agent::Forward() const
 {
-    return { cosf(kinematic.orientation), sinf(kinematic.orientation) };
+	return { cosf(kinematic.orientation), sinf(kinematic.orientation) }; // orientation is an angle in radians, so direction is (cosA, sinA)
 }
 
 
@@ -31,6 +34,7 @@ static float WrapAngle(float a)   // bring any angle into [-PI, PI]
     return a;
 }
 
+
 /// <summary>
 /// Apply the steering to the agent's kinematic state, Orient the agent if needed, and wrap around the screen.
 /// </summary>
@@ -38,11 +42,11 @@ static float WrapAngle(float a)   // bring any angle into [-PI, PI]
 /// <param name="delta"></param>
 void Agent::Update(const SteeringOutput& steering, float delta)
 {
-    // Move using the current velocity
-    kinematic.position = Vector2Add(kinematic.position, Vector2Scale(kinematic.velocity, delta));
+    // Move using the old velocity
+    kinematic.position = Vector2Add(kinematic.position, Vector2Scale(kinematic.velocity, delta));  // P = V*dt + P
 
     // Apply the steering as acceleration
-    kinematic.velocity = Vector2Add(kinematic.velocity, Vector2Scale(steering.linearAcceleration, delta));
+	kinematic.velocity = Vector2Add(kinematic.velocity, Vector2Scale(steering.linearAcceleration, delta)); // V = lAcc*dt + V 
 
     // Clamp speed
     if (Vector2Length(kinematic.velocity) > maxSpeed)
@@ -52,9 +56,9 @@ void Agent::Update(const SteeringOutput& steering, float delta)
     if (orientRotationToMovement) {
         OrientRotationToMovement(delta);
     }
-    else {
-        kinematic.orientation += kinematic.rotation * delta;
-		kinematic.rotation += steering.angularAcceleration * delta;
+	else {  // use the rotation from the steering output, not used anywhere
+		kinematic.orientation += kinematic.rotation * delta;  // angle = angular velocity * dt
+		kinematic.rotation += steering.angularAcceleration * delta;  // angular velocity = angular acceleration * dt
 	}
 
     // Wrap around the screen so it doesn't disappear while testing
@@ -66,8 +70,9 @@ void Agent::Update(const SteeringOutput& steering, float delta)
     if (kinematic.position.y > h) kinematic.position.y -= h;
 }
 
+
 /// <summary>
-/// Draw the agent as a triangle pointing in the direction of its orientation
+/// Draw the agent as a triangle pointing in the direction of its orientation, size and angle are hardcoded
 /// </summary>
 void Agent::Draw(bool isSelected) const
 {
@@ -83,22 +88,24 @@ void Agent::Draw(bool isSelected) const
     DrawTriangle(tip, left, right, isSelected ? selectedColor : defaultColor);
 }
 
+
 /// <summary>
 /// Orient the agent to face the direction of movement, Only active if orientRotationToMovement is true
 /// </summary>
 /// <param name="delta"></param>
 void Agent::OrientRotationToMovement(float delta) {
-    kinematic.rotation = 0.0f;   // not used in this mode
+    kinematic.rotation = 0.0f;   // Angular velocity is not used when orienting to movement, this resets it to be sure
 
-    if (Vector2Length(kinematic.velocity) > minFacingSpeed) {
-        float desired = atan2f(kinematic.velocity.y, kinematic.velocity.x);
-        float diff = WrapAngle(desired - kinematic.orientation);
+	if (Vector2Length(kinematic.velocity) > minFacingSpeed) {   // only orient if moving fast enough
+        float velocityAngle = atan2f(kinematic.velocity.y, kinematic.velocity.x);
+        float difference = WrapAngle(velocityAngle - kinematic.orientation);
 
+		// clamp the rotation to the maximum rotation speed
         float maxStep = maxRotationSpeed * delta;
-        if (diff > maxStep) diff = maxStep;
-        if (diff < -maxStep) diff = -maxStep;
+        if (difference > maxStep) difference = maxStep;
+        if (difference < -maxStep) difference = -maxStep;
 
-        kinematic.orientation += diff;
+        kinematic.orientation += difference;
     }
 
 }

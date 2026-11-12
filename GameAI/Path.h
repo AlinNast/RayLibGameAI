@@ -8,14 +8,14 @@
 // Pure data + math. Knows nothing about steering, so it is reusable.
 class Path {
 public:
-    explicit Path(std::vector<Vector2> pts, bool loop = true)
+    explicit Path(std::vector<Vector2> pts, bool loop = true) // asumes at least 2 points, if not it doesent work
         : points(std::move(pts)), loop(loop)
     {
-        const int n = (int)points.size();
-        segCount = loop ? n : n - 1;
+        const int lSize = (int)points.size();
+        segCount = loop ? lSize : lSize - 1;
         total = 0.0f;
         for (int i = 0; i < segCount; ++i) {
-            Vector2 a = points[i], b = points[(i + 1) % n];
+            Vector2 a = points[i], b = points[(i + 1) % lSize];
             float len = Vector2Distance(a, b);
             cumulative.push_back(total);     // distance at the START of segment i
             lengths.push_back(len);

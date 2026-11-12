@@ -7,11 +7,12 @@
 struct RayHit {
     bool    hit = false;
     float   distance = 0.0f;       // from the ray origin
-    Vector2 point = { 0, 0 };
+    Vector2 point = { 0, 0 };       // where the ray touches the surface
     Vector2 normal = { 0, 0 };   // unit vector pointing away from the surface
 };
 
 static float Cross2D(Vector2 a, Vector2 b) { return a.x * b.y - a.y * b.x; }
+
 
 // Ray (origin + dir * t, 0 <= t <= length) against a circle.
 // extraRadius inflates the circle by the agent's own size.
@@ -19,8 +20,9 @@ static RayHit RayVsCircle(Vector2 origin, Vector2 dir, float length,
     const Circle& c, float extraRadius)
 {
     RayHit result;
-    float r = c.radius + extraRadius;
+    float r = c.radius + extraRadius;  // inflated radius
 
+    //set up the quadratic  t² + 2bt + cc = 0
     Vector2 f = Vector2Subtract(origin, c.center);
     float b = Vector2DotProduct(f, dir);
     float cc = Vector2DotProduct(f, f) - r * r;
